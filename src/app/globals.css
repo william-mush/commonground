@@ -1,26 +1,75 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #fafaf9;
+  --foreground: #1c1917;
+  --card: #ffffff;
+  --card-border: #e7e5e4;
+  --muted: #78716c;
+  --red-accent: #dc2626;
+  --red-bg: #fef2f2;
+  --red-border: #fecaca;
+  --blue-accent: #2563eb;
+  --blue-bg: #eff6ff;
+  --blue-border: #bfdbfe;
+  --green-accent: #16a34a;
+  --green-bg: #f0fdf4;
+  --green-border: #bbf7d0;
+  --yellow-accent: #ca8a04;
+  --yellow-bg: #fefce8;
+  --yellow-border: #fef08a;
+  --purple-accent: #7c3aed;
+  --purple-bg: #f5f3ff;
+  --purple-border: #c4b5fd;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-border: var(--card-border);
+  --color-muted: var(--muted);
+  --color-red-accent: var(--red-accent);
+  --color-red-bg: var(--red-bg);
+  --color-red-border: var(--red-border);
+  --color-blue-accent: var(--blue-accent);
+  --color-blue-bg: var(--blue-bg);
+  --color-blue-border: var(--blue-border);
+  --color-green-accent: var(--green-accent);
+  --color-green-bg: var(--green-bg);
+  --color-green-border: var(--green-border);
+  --color-yellow-accent: var(--yellow-accent);
+  --color-yellow-bg: var(--yellow-bg);
+  --color-yellow-border: var(--yellow-border);
+  --color-purple-accent: var(--purple-accent);
+  --color-purple-bg: var(--purple-bg);
+  --color-purple-border: var(--purple-border);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #0c0a09;
+    --foreground: #e7e5e4;
+    --card: #1c1917;
+    --card-border: #44403c;
+    --muted: #a8a29e;
+    --red-bg: #1a0505;
+    --red-border: #7f1d1d;
+    --blue-bg: #051428;
+    --blue-border: #1e3a5f;
+    --green-bg: #052e16;
+    --green-border: #166534;
+    --yellow-bg: #1a1505;
+    --yellow-border: #854d0e;
+    --purple-bg: #13072b;
+    --purple-border: #4c1d95;
   }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
 }

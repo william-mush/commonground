@@ -1,10 +1,32 @@
+import type { Metadata } from "next";
 import { db } from "@/lib/db";
 import { bills, billTopicLinks } from "@/lib/db/schema";
 import { desc, gte, inArray, eq } from "drizzle-orm";
 import { BillCard } from "@/components/bill-card";
+import { JsonLd } from "@/components/json-ld";
+import { breadcrumbSchema } from "@/lib/json-ld";
 import type { Bill } from "@/lib/db/schema";
 
 export const revalidate = 3600;
+
+export const metadata: Metadata = {
+  title: "Proof It Works",
+  description:
+    "Real bipartisan bills in Congress with cosponsors from both parties — evidence that common ground is not just theory.",
+  openGraph: {
+    type: "website",
+    title: "Proof It Works | CommonGround",
+    description:
+      "Real bipartisan bills in Congress — evidence that common ground is not just theory.",
+  },
+  twitter: {
+    card: "summary",
+    title: "Proof It Works | CommonGround",
+    description:
+      "Real bipartisan bills in Congress — evidence that common ground is not just theory.",
+  },
+  alternates: { canonical: "/proof" },
+};
 
 async function getLinkedTopics(billIds: number[]): Promise<Record<number, string[]>> {
   if (billIds.length === 0) return {};
@@ -61,6 +83,7 @@ export default async function ProofPage() {
 
   return (
     <div>
+      <JsonLd data={breadcrumbSchema([{ name: "Home", path: "/" }, { name: "Proof It Works", path: "/proof" }])} />
       <div className="mb-12 text-center">
         <h1 className="text-4xl font-bold tracking-tight mb-3">
           Proof It Works

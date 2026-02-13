@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { db } from "@/lib/db";
 import { briefs, bills, billTopicLinks } from "@/lib/db/schema";
 import { eq, desc } from "drizzle-orm";
@@ -5,9 +6,53 @@ import { format } from "date-fns";
 import { ConciliationMap } from "@/components/conciliation-map";
 import { AgentConversation } from "@/components/agent-conversation";
 import { BillCard } from "@/components/bill-card";
+import { JsonLd } from "@/components/json-ld";
+import { breadcrumbSchema, articleSchema } from "@/lib/json-ld";
 import type { AgentMessage, SpeechMeta } from "@/lib/db/schema";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+
+export const revalidate = 3600;
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+
+  const result = await db
+    .select()
+    .from(briefs)
+    .where(eq(briefs.slug, slug))
+    .orderBy(desc(briefs.date))
+    .limit(1);
+
+  if (result.length === 0) {
+    return { title: "Topic Not Found" };
+  }
+
+  const brief = result[0];
+  const description = `Analysis of ${brief.topic}: Conservative and progressive positions steelmanned, with shared values and compromise paths identified. From ${format(brief.date, "MMMM d, yyyy")}.`;
+
+  return {
+    title: brief.topic,
+    description,
+    openGraph: {
+      type: "article",
+      title: `${brief.topic} | CommonGround`,
+      description,
+      publishedTime: brief.date.toISOString(),
+      modifiedTime: brief.createdAt.toISOString(),
+    },
+    twitter: {
+      card: "summary",
+      title: `${brief.topic} | CommonGround`,
+      description,
+    },
+    alternates: { canonical: `/topic/${slug}` },
+  };
+}
 
 export default async function TopicPage({
   params,
@@ -48,6 +93,18 @@ export default async function TopicPage({
 
   return (
     <div>
+      <JsonLd data={articleSchema({
+        headline: brief.topic,
+        datePublished: brief.date.toISOString(),
+        dateModified: brief.createdAt.toISOString(),
+        description: `Steelmanned analysis of ${brief.topic} with compromise paths.`,
+        url: `/topic/${slug}`,
+      })} />
+      <JsonLd data={breadcrumbSchema([
+        { name: "Home", path: "/" },
+        { name: brief.topic, path: `/topic/${slug}` },
+      ])} />
+
       {/* Back link */}
       <Link
         href="/"
@@ -102,13 +159,7 @@ export default async function TopicPage({
                             : "bg-muted/20 text-muted"
                       }`}
                     >
-                      {s.party === "R"
-                        ? "R"
-                        : s.party === "D"
-                          ? "D"
-                          : s.party === "I"
-                            ? "I"
-                            : "?"}
+                      {s.party === "R" ? "R" : s.party === "D" ? "D" : s.party === "I" ? "I" : "?"}
                     </span>
                     <span className="text-sm font-medium">
                       {s.speaker || "Unknown Speaker"}
@@ -118,9 +169,7 @@ export default async function TopicPage({
                     </span>
                   </div>
                   {s.title && (
-                    <p className="text-xs text-muted mb-1 line-clamp-1">
-                      {s.title}
-                    </p>
+                    <p className="text-xs text-muted mb-1 line-clamp-1">{s.title}</p>
                   )}
                   <p className="text-sm line-clamp-2">{s.corePosition}</p>
                 </div>

@@ -1,6 +1,30 @@
+import type { Metadata } from "next";
+import { JsonLd } from "@/components/json-ld";
+import { breadcrumbSchema } from "@/lib/json-ld";
+
+export const metadata: Metadata = {
+  title: "How It Works",
+  description:
+    "Learn how CommonGround uses seven specialized AI agents to analyze Congressional speeches, steelman both sides, and find genuine paths to compromise.",
+  openGraph: {
+    type: "website",
+    title: "How CommonGround Works",
+    description:
+      "Seven AI agents analyze Congressional speeches to find genuine common ground between parties.",
+  },
+  twitter: {
+    card: "summary",
+    title: "How CommonGround Works",
+    description:
+      "Seven AI agents analyze Congressional speeches to find genuine common ground between parties.",
+  },
+  alternates: { canonical: "/about" },
+};
+
 export default function AboutPage() {
   return (
     <div className="max-w-3xl mx-auto">
+      <JsonLd data={breadcrumbSchema([{ name: "Home", path: "/" }, { name: "How It Works", path: "/about" }])} />
       <h1 className="text-3xl font-bold mb-6">How CommonGround Works</h1>
 
       <div className="space-y-8">

@@ -3,6 +3,8 @@ import { briefs, billTopicLinks } from "@/lib/db/schema";
 import { desc, and, gte, lte, inArray, sql } from "drizzle-orm";
 import { format } from "date-fns";
 import { BriefCard } from "@/components/brief-card";
+import { JsonLd } from "@/components/json-ld";
+import { breadcrumbSchema } from "@/lib/json-ld";
 
 export const revalidate = 3600; // Revalidate every hour
 
@@ -58,6 +60,7 @@ export default async function HomePage() {
 
   return (
     <div>
+      <JsonLd data={breadcrumbSchema([{ name: "Home", path: "/" }])} />
       {/* Hero */}
       <div className="mb-12 text-center">
         <h1 className="text-4xl font-bold tracking-tight mb-3">

@@ -12,7 +12,7 @@ import { subDays } from "date-fns";
 export const maxDuration = 300; // 5 minutes for Vercel
 
 /**
- * Daily cron job: ingest yesterday's Congressional Record speeches.
+ * Daily cron job: ingest targetDate's Congressional Record speeches.
  * The Congressional Record is typically published the day after floor proceedings.
  */
 export async function GET(request: Request) {
@@ -23,16 +23,20 @@ export async function GET(request: Request) {
   }
 
   try {
-    // Fetch yesterday's speeches (the Record is published with a delay)
-    const yesterday = subDays(new Date(), 1);
-    console.log(`Ingesting speeches for ${yesterday.toISOString()}`);
+    // Allow manual date override via ?date=2026-02-11 query param
+    const { searchParams } = new URL(request.url);
+    const dateParam = searchParams.get("date");
+    const targetDate = dateParam
+      ? new Date(dateParam + "T12:00:00Z")
+      : subDays(new Date(), 1);
+    console.log(`Ingesting speeches for ${targetDate.toISOString()}`);
 
-    const granules = await fetchDailySpeechGranules(yesterday);
+    const granules = await fetchDailySpeechGranules(targetDate);
 
     if (granules.length === 0) {
       return NextResponse.json({
         message: "No speeches found (weekend/recess?)",
-        date: yesterday.toISOString(),
+        date: targetDate.toISOString(),
         count: 0,
       });
     }
@@ -55,7 +59,7 @@ export async function GET(request: Request) {
         }
 
         // Fetch full HTML text
-        const html = await fetchGranuleHtml(yesterday, granule.granuleId);
+        const html = await fetchGranuleHtml(targetDate, granule.granuleId);
         const plainText = htmlToPlainText(html);
 
         // Skip very short entries (procedural notes, etc.)
@@ -72,7 +76,7 @@ export async function GET(request: Request) {
           speaker,
           party: null, // Will be determined by intake agent
           chamber: granule.granuleClass,
-          date: yesterday,
+          date: targetDate,
           rawHtml: html,
           plainText,
           topics: [],
@@ -90,7 +94,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       message: "Ingestion complete",
-      date: yesterday.toISOString(),
+      date: targetDate.toISOString(),
       total: granules.length,
       ingested,
       skipped,

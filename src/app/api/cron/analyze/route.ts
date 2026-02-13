@@ -15,14 +15,18 @@ export async function GET(request: Request) {
   }
 
   try {
-    const yesterday = subDays(new Date(), 1);
-    console.log(`Running analysis pipeline for ${yesterday.toISOString()}`);
+    const { searchParams } = new URL(request.url);
+    const dateParam = searchParams.get("date");
+    const targetDate = dateParam
+      ? new Date(dateParam + "T12:00:00Z")
+      : subDays(new Date(), 1);
+    console.log(`Running analysis pipeline for ${targetDate.toISOString()}`);
 
-    const briefCount = await runPipeline(yesterday);
+    const briefCount = await runPipeline(targetDate);
 
     return NextResponse.json({
       message: "Analysis complete",
-      date: yesterday.toISOString(),
+      date: targetDate.toISOString(),
       briefsGenerated: briefCount,
     });
   } catch (err) {

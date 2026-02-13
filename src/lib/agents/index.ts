@@ -9,3 +9,5 @@ export type { DemocracyResult, DemocracyFlag } from "./democracy-guard";
 export { runPolicyDrafter } from "./policy-drafter";
 export { runOpportunityScout } from "./opportunity-scout";
 export type { ScoutResult } from "./opportunity-scout";
+export { runBillMatcher } from "./bill-matcher";
+export type { BillMatch, BillMatchResult } from "./bill-matcher";

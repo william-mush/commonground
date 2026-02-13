@@ -40,6 +40,9 @@ export default function RootLayout({
               <Link href="/" className="hover:text-foreground transition-colors">
                 Today
               </Link>
+              <Link href="/proof" className="hover:text-foreground transition-colors">
+                Proof It Works
+              </Link>
               <Link
                 href="/about"
                 className="hover:text-foreground transition-colors"

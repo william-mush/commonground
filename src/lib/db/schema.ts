@@ -103,7 +103,69 @@ export type AgentMessage = {
   timestamp: string;
 };
 
+// Bipartisan bills from Congress.gov
+export const bills = pgTable(
+  "bills",
+  {
+    id: serial("id").primaryKey(),
+    congress: text("congress").notNull(),
+    billType: text("bill_type").notNull(), // hr, s, hjres, sjres
+    billNumber: text("bill_number").notNull(),
+    title: text("title").notNull(),
+    policyArea: text("policy_area"),
+    legislativeSubjects: jsonb("legislative_subjects").$type<string[]>().default([]),
+
+    // Sponsor
+    sponsorName: text("sponsor_name"),
+    sponsorParty: text("sponsor_party"), // R, D, I
+    sponsorState: text("sponsor_state"),
+
+    // Cosponsor party counts
+    cosponsorCountR: text("cosponsor_count_r").default("0"),
+    cosponsorCountD: text("cosponsor_count_d").default("0"),
+    cosponsorCountI: text("cosponsor_count_i").default("0"),
+    cosponsorTotal: text("cosponsor_total").default("0"),
+
+    // Bipartisan score: min(R,D) / max(R,D), 0-1
+    bipartisanScore: text("bipartisan_score"),
+
+    // Status
+    status: text("status").notNull(), // introduced, committee, floor, passed_one, passed_both, enacted, vetoed
+    latestActionText: text("latest_action_text"),
+    latestActionDate: timestamp("latest_action_date", { mode: "date" }),
+
+    congressGovUrl: text("congress_gov_url"),
+    createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("bills_congress_type_number_idx").on(table.congress, table.billType, table.billNumber),
+    index("bills_bipartisan_score_idx").on(table.bipartisanScore),
+    index("bills_status_idx").on(table.status),
+    index("bills_policy_area_idx").on(table.policyArea),
+  ]
+);
+
+// Links bills to CommonGround topic slugs
+export const billTopicLinks = pgTable(
+  "bill_topic_links",
+  {
+    id: serial("id").primaryKey(),
+    billId: serial("bill_id").notNull(),
+    topicSlug: text("topic_slug").notNull(),
+    confidence: text("confidence"), // high, medium, low
+    createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("bill_topic_link_idx").on(table.billId, table.topicSlug),
+    index("bill_topic_slug_idx").on(table.topicSlug),
+  ]
+);
+
 export type Speech = typeof speeches.$inferSelect;
 export type NewSpeech = typeof speeches.$inferInsert;
 export type Brief = typeof briefs.$inferSelect;
 export type NewBrief = typeof briefs.$inferInsert;
+export type Bill = typeof bills.$inferSelect;
+export type NewBill = typeof bills.$inferInsert;
+export type BillTopicLink = typeof billTopicLinks.$inferSelect;

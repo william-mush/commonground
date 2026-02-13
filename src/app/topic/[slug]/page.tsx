@@ -1,9 +1,10 @@
 import { db } from "@/lib/db";
-import { briefs } from "@/lib/db/schema";
+import { briefs, bills, billTopicLinks } from "@/lib/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { format } from "date-fns";
 import { ConciliationMap } from "@/components/conciliation-map";
 import { AgentConversation } from "@/components/agent-conversation";
+import { BillCard } from "@/components/bill-card";
 import type { AgentMessage, SpeechMeta } from "@/lib/db/schema";
 import { notFound } from "next/navigation";
 import Link from "next/link";
@@ -29,6 +30,21 @@ export default async function TopicPage({
   const brief = result[0];
   const conversation = brief.agentConversation as AgentMessage[];
   const speechMeta = (brief.sourceSpeechMeta as SpeechMeta[]) || [];
+
+  // Fetch related bills
+  let relatedBills: (typeof bills.$inferSelect)[] = [];
+  try {
+    const linked = await db
+      .select({ bill: bills })
+      .from(billTopicLinks)
+      .innerJoin(bills, eq(bills.id, billTopicLinks.billId))
+      .where(eq(billTopicLinks.topicSlug, slug))
+      .orderBy(desc(bills.bipartisanScore))
+      .limit(5);
+    relatedBills = linked.map((r) => r.bill);
+  } catch {
+    // Bills table may not exist yet
+  }
 
   return (
     <div>
@@ -125,6 +141,29 @@ export default async function TopicPage({
             </span>
           </div>
           <p className="text-sm leading-relaxed">{brief.collaborationReason}</p>
+        </div>
+      )}
+
+      {/* Related Bills */}
+      {relatedBills.length > 0 && (
+        <div className="border border-green-border bg-green-bg rounded-lg p-6 mb-8">
+          <h2 className="text-sm font-semibold text-green-accent mb-1 uppercase tracking-wider">
+            Related Bills in Congress
+          </h2>
+          <p className="text-xs text-muted mb-3">
+            Real legislation related to this topic with bipartisan support
+          </p>
+          <div className="divide-y divide-green-border">
+            {relatedBills.map((bill) => (
+              <BillCard key={bill.id} bill={bill} compact />
+            ))}
+          </div>
+          <Link
+            href="/proof"
+            className="text-xs text-green-accent hover:underline mt-2 inline-block"
+          >
+            See all bipartisan bills &rarr;
+          </Link>
         </div>
       )}
 

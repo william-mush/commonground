@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
-import { briefs } from "@/lib/db/schema";
-import { desc, and, gte, lte } from "drizzle-orm";
+import { briefs, billTopicLinks } from "@/lib/db/schema";
+import { desc, and, gte, lte, inArray, sql } from "drizzle-orm";
 import { format } from "date-fns";
 import { BriefCard } from "@/components/brief-card";
 
@@ -33,6 +33,27 @@ export default async function HomePage() {
     }
   } catch {
     // Database not connected yet — show empty state
+  }
+
+  // Get bill counts per topic slug
+  let billCountMap: Record<string, number> = {};
+  try {
+    if (todaysBriefs.length > 0) {
+      const slugs = todaysBriefs.map((b) => b.slug);
+      const billCounts = await db
+        .select({
+          topicSlug: billTopicLinks.topicSlug,
+          count: sql<number>`count(*)::int`,
+        })
+        .from(billTopicLinks)
+        .where(inArray(billTopicLinks.topicSlug, slugs))
+        .groupBy(billTopicLinks.topicSlug);
+      billCountMap = Object.fromEntries(
+        billCounts.map((r) => [r.topicSlug, r.count])
+      );
+    }
+  } catch {
+    // Bills table may not exist yet
   }
 
   return (
@@ -100,7 +121,7 @@ export default async function HomePage() {
         {todaysBriefs.length > 0 ? (
           <div className="grid gap-6">
             {todaysBriefs.map((brief) => (
-              <BriefCard key={brief.id} brief={brief} />
+              <BriefCard key={brief.id} brief={brief} relatedBillCount={billCountMap[brief.slug] || 0} />
             ))}
           </div>
         ) : (

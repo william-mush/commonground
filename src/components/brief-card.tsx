@@ -2,7 +2,7 @@ import type { Brief } from "@/lib/db/schema";
 import { format } from "date-fns";
 import Link from "next/link";
 
-export function BriefCard({ brief }: { brief: Brief }) {
+export function BriefCard({ brief, relatedBillCount }: { brief: Brief; relatedBillCount?: number }) {
   return (
     <Link
       href={`/topic/${brief.slug}?date=${format(brief.date, "yyyy-MM-dd")}`}
@@ -60,13 +60,19 @@ export function BriefCard({ brief }: { brief: Brief }) {
         </div>
       </div>
 
-      {(brief.compromisePaths as string[])?.length > 0 && (
-        <p className="text-sm text-muted">
-          {(brief.compromisePaths as string[]).length} compromise path
-          {(brief.compromisePaths as string[]).length !== 1 ? "s" : ""}{" "}
-          identified
-        </p>
-      )}
+      <div className="flex items-center gap-3 text-sm text-muted">
+        {(brief.compromisePaths as string[])?.length > 0 && (
+          <span>
+            {(brief.compromisePaths as string[]).length} compromise path
+            {(brief.compromisePaths as string[]).length !== 1 ? "s" : ""}
+          </span>
+        )}
+        {relatedBillCount != null && relatedBillCount > 0 && (
+          <span className="text-xs px-2 py-0.5 rounded bg-green-bg border border-green-border text-green-accent font-medium">
+            {relatedBillCount} bill{relatedBillCount !== 1 ? "s" : ""} in Congress
+          </span>
+        )}
+      </div>
     </Link>
   );
 }

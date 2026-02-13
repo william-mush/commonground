@@ -1,19 +1,27 @@
 import type { Brief } from "@/lib/db/schema";
 import { format } from "date-fns";
+import Link from "next/link";
 
 export function BriefCard({ brief }: { brief: Brief }) {
   return (
-    <a
+    <Link
       href={`/topic/${brief.slug}?date=${format(brief.date, "yyyy-MM-dd")}`}
       className="block border border-card-border bg-card rounded-lg p-6 hover:border-purple-accent/50 transition-colors"
     >
       <div className="flex items-start justify-between mb-3">
         <h3 className="text-lg font-semibold">{brief.topic}</h3>
-        {brief.democracyFlagged && (
-          <span className="text-xs px-2 py-1 rounded bg-yellow-bg border border-yellow-border text-yellow-accent font-medium">
-            Democracy Flag
-          </span>
-        )}
+        <div className="flex items-center gap-2">
+          {brief.collaborationScore && (
+            <span className="text-xs px-2 py-1 rounded bg-purple-bg border border-purple-border text-purple-accent font-medium">
+              Collaboration: {brief.collaborationScore}
+            </span>
+          )}
+          {brief.democracyFlagged && (
+            <span className="text-xs px-2 py-1 rounded bg-yellow-bg border border-yellow-border text-yellow-accent font-medium">
+              Democracy Flag
+            </span>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4 mb-4">
@@ -59,6 +67,6 @@ export function BriefCard({ brief }: { brief: Brief }) {
           identified
         </p>
       )}
-    </a>
+    </Link>
   );
 }

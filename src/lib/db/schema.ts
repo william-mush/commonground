@@ -64,7 +64,16 @@ export const briefs = pgTable(
       .$type<AgentMessage[]>()
       .default([]),
 
-    // Source speech IDs
+    // Source speech metadata for attribution
+    sourceSpeechMeta: jsonb("source_speech_meta")
+      .$type<SpeechMeta[]>()
+      .default([]),
+
+    // Opportunity Scout score and reasoning
+    collaborationScore: text("collaboration_score"),
+    collaborationReason: text("collaboration_reason"),
+
+    // Legacy source speech IDs
     sourceSpeechIds: jsonb("source_speech_ids")
       .$type<number[]>()
       .default([]),
@@ -78,9 +87,18 @@ export const briefs = pgTable(
 );
 
 // Types
+export type SpeechMeta = {
+  granuleId: string;
+  speaker: string | null;
+  party: "R" | "D" | "I" | "unknown";
+  chamber: "HOUSE" | "SENATE";
+  title: string;
+  corePosition: string;
+};
+
 export type AgentMessage = {
   agent: string;
-  role: "intake" | "red" | "blue" | "bridge" | "guard" | "drafter";
+  role: "intake" | "red" | "blue" | "bridge" | "guard" | "drafter" | "scout";
   content: string;
   timestamp: string;
 };

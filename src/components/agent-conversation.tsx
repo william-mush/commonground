@@ -34,6 +34,12 @@ const agentStyles: Record<
     accent: "text-yellow-accent",
     label: "Democracy Guard",
   },
+  scout: {
+    bg: "bg-purple-bg",
+    border: "border-purple-border",
+    accent: "text-purple-accent",
+    label: "Opportunity Scout",
+  },
   drafter: {
     bg: "bg-card",
     border: "border-card-border",

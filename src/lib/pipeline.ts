@@ -4,13 +4,15 @@ import type { AgentMessage } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import {
   runIntakeAgent,
+  runOpportunityScout,
   runRedSteelman,
   runBlueSteelman,
   runBridgeAgent,
   runDemocracyGuard,
   runPolicyDrafter,
 } from "@/lib/agents";
-import type { IntakeTopic } from "@/lib/agents";
+import type { IntakeTopic, ScoutResult } from "@/lib/agents";
+import type { SpeechMeta } from "@/lib/db/schema";
 
 /**
  * Run the full agent pipeline on unprocessed speeches for a given date.
@@ -56,20 +58,40 @@ export async function runPipeline(date: Date): Promise<number> {
     return 0;
   }
 
-  // Limit to 1 topic per invocation to stay within Vercel 5-min function timeout
-  const topTopics = substantiveTopics.slice(0, 1);
-  console.log(`Found ${substantiveTopics.length} topics, processing top ${topTopics.length}`);
+  // 2b. Run Opportunity Scout to rank topics by collaboration potential
+  console.log(`Running Opportunity Scout on ${substantiveTopics.length} topics...`);
+  let scoutResult: ScoutResult | null = null;
+  let topTopic: IntakeTopic;
 
-  // 3. For each topic, run the full agent pipeline
+  try {
+    scoutResult = await runOpportunityScout(substantiveTopics);
+    console.log(`Scout summary: ${scoutResult.summary}`);
+
+    // Pick the highest-scoring topic that exists in our substantive list
+    const bestScoutTopic = scoutResult.rankedTopics
+      .sort((a, b) => b.score - a.score)
+      .find((st) => substantiveTopics.some((t) => t.slug === st.slug));
+
+    if (bestScoutTopic) {
+      topTopic = substantiveTopics.find((t) => t.slug === bestScoutTopic.slug)!;
+      console.log(`Scout picked "${topTopic.name}" (score: ${bestScoutTopic.score})`);
+    } else {
+      topTopic = substantiveTopics[0];
+      console.log(`Scout found no match, falling back to first topic: "${topTopic.name}"`);
+    }
+  } catch (err) {
+    console.error("Opportunity Scout failed, falling back to first topic:", err);
+    topTopic = substantiveTopics[0];
+  }
+
+  // 3. Run the full agent pipeline on the selected topic
   let briefCount = 0;
 
-  for (const topic of topTopics) {
-    try {
-      const brief = await processTopic(topic, date, rawSpeeches);
-      if (brief) briefCount++;
-    } catch (err) {
-      console.error(`Failed to process topic "${topic.name}":`, err);
-    }
+  try {
+    const brief = await processTopic(topTopic, date, rawSpeeches, scoutResult);
+    if (brief) briefCount++;
+  } catch (err) {
+    console.error(`Failed to process topic "${topTopic.name}":`, err);
   }
 
   // 4. Mark speeches as processed
@@ -86,10 +108,14 @@ export async function runPipeline(date: Date): Promise<number> {
 async function processTopic(
   topic: IntakeTopic,
   date: Date,
-  allSpeeches: (typeof speeches.$inferSelect)[]
+  allSpeeches: (typeof speeches.$inferSelect)[],
+  scoutResult?: ScoutResult | null
 ): Promise<boolean> {
   const conversation: AgentMessage[] = [];
   const now = () => new Date().toISOString();
+
+  // Get scout info for this topic
+  const scoutInfo = scoutResult?.rankedTopics.find((t) => t.slug === topic.slug);
 
   // Split speeches by party
   const redSpeeches = topic.speeches
@@ -113,6 +139,15 @@ async function processTopic(
     content: `Identified topic: ${topic.name}. Found ${redSpeeches.length} Republican and ${blueSpeeches.length} Democratic speeches.${oneSided ? " Note: Only one party addressed this topic today." : ""}`,
     timestamp: now(),
   });
+
+  if (scoutInfo) {
+    conversation.push({
+      agent: "Opportunity Scout",
+      role: "scout",
+      content: `Collaboration score: ${scoutInfo.score}/10. ${scoutInfo.reason}${scoutInfo.sharedUnderlying ? ` Shared underlying value: ${scoutInfo.sharedUnderlying}` : ""}`,
+      timestamp: now(),
+    });
+  }
 
   // 4. Run Red and Blue steelman agents in parallel
   console.log(`  Steelmanning "${topic.name}"...`);
@@ -193,11 +228,23 @@ async function processTopic(
     timestamp: now(),
   });
 
-  // 8. Find source speech IDs
+  // 8. Build source speech metadata for attribution
   const sourceGranuleIds = topic.speeches.map((s) => s.granuleId);
   const sourceSpeechIds = allSpeeches
     .filter((s) => sourceGranuleIds.includes(s.granuleId))
     .map((s) => s.id);
+
+  const sourceSpeechMeta: SpeechMeta[] = topic.speeches.map((s) => {
+    const dbSpeech = allSpeeches.find((db) => db.granuleId === s.granuleId);
+    return {
+      granuleId: s.granuleId,
+      speaker: s.speaker || dbSpeech?.speaker || null,
+      party: s.party,
+      chamber: s.chamber,
+      title: dbSpeech?.title || "",
+      corePosition: s.corePosition,
+    };
+  });
 
   // 9. Save the brief
   await db.insert(briefs).values({
@@ -213,6 +260,9 @@ async function processTopic(
     democracyFlagged: !democracyResult.passed,
     policyDraft,
     agentConversation: conversation,
+    collaborationScore: scoutInfo ? `${scoutInfo.score}/10` : null,
+    collaborationReason: scoutInfo?.reason || null,
+    sourceSpeechMeta,
     sourceSpeechIds,
   });
 

@@ -4,7 +4,7 @@ import { eq, desc } from "drizzle-orm";
 import { format } from "date-fns";
 import { ConciliationMap } from "@/components/conciliation-map";
 import { AgentConversation } from "@/components/agent-conversation";
-import type { AgentMessage } from "@/lib/db/schema";
+import type { AgentMessage, SpeechMeta } from "@/lib/db/schema";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 
@@ -28,6 +28,7 @@ export default async function TopicPage({
 
   const brief = result[0];
   const conversation = brief.agentConversation as AgentMessage[];
+  const speechMeta = (brief.sourceSpeechMeta as SpeechMeta[]) || [];
 
   return (
     <div>
@@ -53,6 +54,79 @@ export default async function TopicPage({
           Analysis from {format(brief.date, "MMMM d, yyyy")}
         </p>
       </div>
+
+      {/* Source Speeches */}
+      {speechMeta.length > 0 && (
+        <div className="border border-card-border bg-card rounded-lg p-6 mb-8">
+          <h2 className="text-lg font-bold mb-4">Source Speeches</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {speechMeta
+              .sort((a, b) => {
+                const order = { R: 0, D: 1, I: 2, unknown: 3 };
+                return order[a.party] - order[b.party];
+              })
+              .map((s, i) => (
+                <div
+                  key={i}
+                  className={`rounded-md border p-3 ${
+                    s.party === "R"
+                      ? "border-red-border bg-red-bg"
+                      : s.party === "D"
+                        ? "border-blue-border bg-blue-bg"
+                        : "border-card-border bg-card"
+                  }`}
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    <span
+                      className={`text-xs font-semibold px-1.5 py-0.5 rounded ${
+                        s.party === "R"
+                          ? "bg-red-accent/20 text-red-accent"
+                          : s.party === "D"
+                            ? "bg-blue-accent/20 text-blue-accent"
+                            : "bg-muted/20 text-muted"
+                      }`}
+                    >
+                      {s.party === "R"
+                        ? "R"
+                        : s.party === "D"
+                          ? "D"
+                          : s.party === "I"
+                            ? "I"
+                            : "?"}
+                    </span>
+                    <span className="text-sm font-medium">
+                      {s.speaker || "Unknown Speaker"}
+                    </span>
+                    <span className="text-xs text-muted">
+                      {s.chamber === "HOUSE" ? "House" : "Senate"}
+                    </span>
+                  </div>
+                  {s.title && (
+                    <p className="text-xs text-muted mb-1 line-clamp-1">
+                      {s.title}
+                    </p>
+                  )}
+                  <p className="text-sm line-clamp-2">{s.corePosition}</p>
+                </div>
+              ))}
+          </div>
+        </div>
+      )}
+
+      {/* Collaboration Potential */}
+      {brief.collaborationScore && (
+        <div className="border border-purple-border bg-purple-bg rounded-lg p-5 mb-8">
+          <div className="flex items-center gap-2 mb-2">
+            <h2 className="text-sm font-semibold text-purple-accent uppercase tracking-wider">
+              Collaboration Potential
+            </h2>
+            <span className="text-xs px-2 py-0.5 rounded-full bg-purple-accent/20 text-purple-accent font-bold">
+              {brief.collaborationScore}
+            </span>
+          </div>
+          <p className="text-sm leading-relaxed">{brief.collaborationReason}</p>
+        </div>
+      )}
 
       {/* Steelmanned Positions */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">

@@ -7,3 +7,5 @@ export type { BridgeResult } from "./bridge";
 export { runDemocracyGuard } from "./democracy-guard";
 export type { DemocracyResult, DemocracyFlag } from "./democracy-guard";
 export { runPolicyDrafter } from "./policy-drafter";
+export { runOpportunityScout } from "./opportunity-scout";
+export type { ScoutResult } from "./opportunity-scout";

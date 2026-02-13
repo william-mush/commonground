@@ -29,13 +29,13 @@ export function BriefCard({ brief, relatedBillCount }: { brief: Brief; relatedBi
           <div className="text-xs font-medium text-red-accent mb-1">
             Conservative Position
           </div>
-          <p className="text-sm line-clamp-3">{brief.redPosition}</p>
+          <p className="text-sm leading-relaxed whitespace-pre-wrap">{brief.redPosition}</p>
         </div>
         <div className="rounded-md bg-blue-bg border border-blue-border p-3">
           <div className="text-xs font-medium text-blue-accent mb-1">
             Progressive Position
           </div>
-          <p className="text-sm line-clamp-3">{brief.bluePosition}</p>
+          <p className="text-sm leading-relaxed whitespace-pre-wrap">{brief.bluePosition}</p>
         </div>
       </div>
 
@@ -44,7 +44,7 @@ export function BriefCard({ brief, relatedBillCount }: { brief: Brief; relatedBi
           Common Ground
         </div>
         <div className="flex flex-wrap gap-1.5">
-          {(brief.sharedValues as string[])?.slice(0, 3).map((v, i) => (
+          {(brief.sharedValues as string[])?.map((v, i) => (
             <span
               key={i}
               className="text-xs px-2 py-0.5 rounded-full bg-green-bg border border-green-border"
@@ -52,11 +52,6 @@ export function BriefCard({ brief, relatedBillCount }: { brief: Brief; relatedBi
               {v}
             </span>
           ))}
-          {(brief.sharedValues as string[])?.length > 3 && (
-            <span className="text-xs text-muted">
-              +{(brief.sharedValues as string[]).length - 3} more
-            </span>
-          )}
         </div>
       </div>
 

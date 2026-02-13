@@ -33,10 +33,14 @@ export async function runPipeline(date: Date): Promise<number> {
     return 0;
   }
 
-  // 2. Run Intake Agent — categorize and extract topics
-  console.log(`Running intake agent on ${rawSpeeches.length} speeches...`);
+  // 2. Select the longest speeches (most substantive) — limit to 30 to stay within timeout
+  const sortedSpeeches = [...rawSpeeches]
+    .sort((a, b) => b.plainText.length - a.plainText.length)
+    .slice(0, 30);
+
+  console.log(`Running intake agent on ${sortedSpeeches.length} speeches (of ${rawSpeeches.length} total)...`);
   const intakeResult = await runIntakeAgent(
-    rawSpeeches.map((s) => ({
+    sortedSpeeches.map((s) => ({
       granuleId: s.granuleId,
       text: s.plainText,
       chamber: s.chamber,
@@ -52,12 +56,14 @@ export async function runPipeline(date: Date): Promise<number> {
     return 0;
   }
 
-  console.log(`Found ${substantiveTopics.length} substantive topics`);
+  // Limit to top 3 topics to stay within Vercel function timeout
+  const topTopics = substantiveTopics.slice(0, 3);
+  console.log(`Found ${substantiveTopics.length} topics, processing top ${topTopics.length}`);
 
   // 3. For each topic, run the full agent pipeline
   let briefCount = 0;
 
-  for (const topic of substantiveTopics) {
+  for (const topic of topTopics) {
     try {
       const brief = await processTopic(topic, date, rawSpeeches);
       if (brief) briefCount++;

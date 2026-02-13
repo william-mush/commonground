@@ -25,12 +25,13 @@ export async function callAgent(
   options?: {
     maxTokens?: number;
     temperature?: number;
+    model?: string;
   }
 ): Promise<string> {
   const anthropic = getClient();
 
   const response = await anthropic.messages.create({
-    model: "claude-sonnet-4-5-20250929",
+    model: options?.model ?? "claude-haiku-4-5-20251001",
     max_tokens: options?.maxTokens ?? 4096,
     temperature: options?.temperature ?? 0.7,
     system: systemPrompt,

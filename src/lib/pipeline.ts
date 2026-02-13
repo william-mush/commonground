@@ -33,10 +33,10 @@ export async function runPipeline(date: Date): Promise<number> {
     return 0;
   }
 
-  // 2. Select the longest speeches (most substantive) — limit to 30 to stay within timeout
+  // 2. Select the longest speeches (most substantive) — limit to 20 to stay within timeout
   const sortedSpeeches = [...rawSpeeches]
     .sort((a, b) => b.plainText.length - a.plainText.length)
-    .slice(0, 30);
+    .slice(0, 20);
 
   console.log(`Running intake agent on ${sortedSpeeches.length} speeches (of ${rawSpeeches.length} total)...`);
   const intakeResult = await runIntakeAgent(
@@ -56,8 +56,8 @@ export async function runPipeline(date: Date): Promise<number> {
     return 0;
   }
 
-  // Limit to top 3 topics to stay within Vercel function timeout
-  const topTopics = substantiveTopics.slice(0, 3);
+  // Limit to 1 topic per invocation to stay within Vercel 5-min function timeout
+  const topTopics = substantiveTopics.slice(0, 1);
   console.log(`Found ${substantiveTopics.length} topics, processing top ${topTopics.length}`);
 
   // 3. For each topic, run the full agent pipeline

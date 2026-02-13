@@ -7,7 +7,7 @@ type GranuleSummary = {
   title: string;
   dateIssued: string;
   category: string;
-  docClass: string; // HOUSE, SENATE, EXTENSIONS, DIGEST
+  granuleClass: string; // HOUSE, SENATE, EXTENSIONS, DIGEST
 };
 
 type GranuleListResponse = {
@@ -69,7 +69,7 @@ export async function fetchDailySpeechGranules(
 
     // Filter to floor speeches (HOUSE and SENATE sections only)
     const speeches = data.granules.filter(
-      (g) => g.docClass === "HOUSE" || g.docClass === "SENATE"
+      (g) => g.granuleClass === "HOUSE" || g.granuleClass === "SENATE"
     );
     allGranules.push(...speeches);
 

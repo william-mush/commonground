@@ -71,7 +71,7 @@ export async function GET(request: Request) {
           title: granule.title,
           speaker,
           party: null, // Will be determined by intake agent
-          chamber: granule.docClass,
+          chamber: granule.granuleClass,
           date: yesterday,
           rawHtml: html,
           plainText,

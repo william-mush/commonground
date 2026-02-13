@@ -1,8 +1,8 @@
 const BASE_URL = "https://api.congress.gov/v3";
 
 function apiKey(): string {
-  const key = process.env.CONGRESS_API_KEY;
-  if (!key) throw new Error("CONGRESS_API_KEY is required");
+  const key = process.env.CONGRESS_API_KEY || process.env.GOVINFO_API_KEY;
+  if (!key) throw new Error("CONGRESS_API_KEY or GOVINFO_API_KEY is required");
   return key;
 }
 

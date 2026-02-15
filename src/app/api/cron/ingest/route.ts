@@ -16,9 +16,11 @@ export const maxDuration = 300; // 5 minutes for Vercel
  * The Congressional Record is typically published the day after floor proceedings.
  */
 export async function GET(request: Request) {
-  // Verify cron secret to prevent unauthorized access
+  // Verify cron secret — Vercel sends Authorization: Bearer <CRON_SECRET>
   const authHeader = request.headers.get("authorization");
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  const validSecret = process.env.CRON_SECRET;
+  if (!validSecret || authHeader !== `Bearer ${validSecret}`) {
+    console.error("Cron auth failed. Header:", authHeader?.slice(0, 20) + "...", "Secret set:", !!validSecret);
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

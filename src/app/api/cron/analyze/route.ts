@@ -10,7 +10,9 @@ export const maxDuration = 300; // 5 minutes for Vercel
  */
 export async function GET(request: Request) {
   const authHeader = request.headers.get("authorization");
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  const validSecret = process.env.CRON_SECRET;
+  if (!validSecret || authHeader !== `Bearer ${validSecret}`) {
+    console.error("Cron auth failed. Header:", authHeader?.slice(0, 20) + "...", "Secret set:", !!validSecret);
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
